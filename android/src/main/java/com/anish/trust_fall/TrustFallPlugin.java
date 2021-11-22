@@ -2,6 +2,7 @@ package com.anish.trust_fall;
 
 import android.content.Context;
 import android.location.Location;
+import android.os.Looper;
 
 import com.anish.trust_fall.Emulator.EmulatorCheck;
 import com.anish.trust_fall.ExternalStorage.ExternalStorageCheck;
@@ -19,6 +20,8 @@ public class TrustFallPlugin implements MethodCallHandler {
   /** Plugin registration. */
 
   private final Context context;
+
+  @SuppressWarnings("deprecation")
   public static void registerWith(Registrar registrar) {
     final MethodChannel channel = new MethodChannel(registrar.messenger(), "trust_fall");
     channel.setMethodCallHandler(new TrustFallPlugin(registrar.context()));
@@ -37,13 +40,19 @@ public class TrustFallPlugin implements MethodCallHandler {
     } else if (call.method.equals("canMockLocation")) {
       MockLocationCheck.LocationResult locationResult = new MockLocationCheck.LocationResult(){
         @Override
-        public void gotLocation(Location location){
-          //Got the location!
-          if(location != null){
-            result.success(location.isFromMockProvider());
-          }else {
-            result.success(false);
-          }
+        public void gotLocation(final Location location){
+          android.os.Handler handler = new android.os.Handler(Looper.getMainLooper());
+          handler.post(new Runnable() {
+            @Override
+            public void run() {
+              //Got the location!
+              if(location != null){
+                result.success(location.isFromMockProvider());
+              }else {
+                result.success(false);
+              }
+            }
+          });
         }
       };
       MockLocationCheck mockLocationCheck = new MockLocationCheck();
